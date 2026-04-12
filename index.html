@@ -65,7 +65,7 @@
   .dia:hover:not(.ocupado):not(.pasado):not(.vacio) { border-color:var(--red); color:var(--red); }
   .dia.seleccionado { background:var(--red); color:white; border-color:var(--red); }
   .dia.ocupado { background:rgba(204,0,0,0.1); color:#ff4444; border-color:rgba(204,0,0,0.2); cursor:not-allowed; }
-  .dia.ocupado::after { content:'×'; font-size:10px; position:absolute; top:1px; right:3px; color:rgba(255,68,68,0.7); }
+  .dia.ocupado::after { content:'x'; font-size:10px; position:absolute; top:1px; right:3px; color:rgba(255,68,68,0.7); }
   .dia.pasado { color:#2d2d2d; cursor:not-allowed; }
   .dia.vacio { cursor:default; }
   .dia.hoy:not(.seleccionado) { border-color:rgba(204,0,0,0.5); color:var(--red); }
@@ -129,15 +129,15 @@
   </header>
 
   <div class="hero">
-    <div class="hero-badge">&#9679; Reserva tu sesión</div>
+    <div class="hero-badge">&#9679; Reserva tu sesion</div>
     <h1>HABLA CON<br>TU <span>MENTOR</span></h1>
-    <p>Elige tu profesor, escoge el día y hora, y da el siguiente paso en tu canal de YouTube.</p>
+    <p>Elige tu profesor, escoge el dia y hora, y da el siguiente paso en tu canal de YouTube.</p>
   </div>
 
   <div class="main">
 
     <div class="card">
-      <div class="card-title">Tu información</div>
+      <div class="card-title">Tu informacion</div>
       <div class="auth-badge" id="authBadge">Conectado con Google</div>
 
       <div class="auth-section" id="authSection">
@@ -164,21 +164,19 @@
       <div class="field">
         <label>Elige tu profesor</label>
         <div class="profesores" id="profesoresList"></div>
-        <div class="admin-note">Para añadir profesores, edita <code>const profesores</code> en el script al final del HTML.</div>
+        <div class="admin-note">Para anadir profesores, edita <code>const profesores</code> en el script.</div>
       </div>
 
       <div class="field">
         <label>Motivo de la cita (opcional)</label>
-        <textarea id="motivo" placeholder="Cuéntanos en qué necesitas ayuda..."></textarea>
+        <textarea id="motivo" placeholder="Cuentanos en que necesitas ayuda..."></textarea>
       </div>
 
       <div class="field">
-        <label>Duración de la sesión</label>
+        <label>Duracion de la sesion</label>
         <select id="duracion">
           <option value="30">30 minutos</option>
           <option value="60" selected>1 hora</option>
-          <option value="90">1 hora 30 min</option>
-          <option value="120">2 horas</option>
         </select>
       </div>
 
@@ -202,11 +200,11 @@
       </div>
 
       <div class="field" style="margin-top:24px">
-        <label>Hora disponible (hora española)</label>
+        <label>Hora disponible (hora espanola)</label>
         <div class="horas-grid" id="horasGrid"></div>
       </div>
 
-      <div class="resumen-fecha" id="resumenFecha">Selecciona un día para ver las horas</div>
+      <div class="resumen-fecha" id="resumenFecha">Selecciona un dia para ver las horas</div>
     </div>
 
   </div>
@@ -214,9 +212,9 @@
 
 <div class="success-overlay" id="successOverlay">
   <div class="success-box">
-    <div class="success-icon">✓</div>
+    <div class="success-icon">OK</div>
     <h2>CITA RESERVADA</h2>
-    <p>Tu sesión ha sido añadida al calendario. Te esperamos.</p>
+    <p>Tu sesion ha sido anadida al calendario. Te esperamos.</p>
     <div class="success-detail" id="successDetail"></div>
     <button class="btn-close" onclick="closeSuccess()">CERRAR</button>
   </div>
@@ -226,57 +224,78 @@
 <script src="https://accounts.google.com/gsi/client"></script>
 <script>
   const CLIENT_ID   = '499171720297-dl189p095l05hiuo12qid240mnb4k82h.apps.googleusercontent.com';
-  const ADMIN_EMAIL = 'vsergiobusiness@gmail.com'; // Tu correo — siempre recibe la cita
+  const ADMIN_EMAIL = 'vsergiobusiness@gmail.com';
   const CALENDAR_ID = 'primary';
-  const SCOPES      = 'https://www.googleapis.com/auth/calendar.events';
+  const SHEET_ID    = '1JxJvYp4SgIPslBLJ-btonZsfwugkiuFSdAFOKkCLyfk';
+  const SHEET_NAME  = 'Hoja 1';
+  const SCOPES      = 'https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/spreadsheets';
 
-  // ╔═══════════════════════════════════════════╗
-  // ║  AÑADE PROFESORES AQUÍ                   ║
-  // ╚═══════════════════════════════════════════╝
   const profesores = [
     { nombre: 'Zoptimus',  iniciales: 'ZO' },
     { nombre: 'vSergiors', iniciales: 'VS' },
     { nombre: 'KairoxX',   iniciales: 'KX' },
   ];
 
-  // ╔════════════════════════════════════════════════╗
-  // ║  DÍAS COMPLETAMENTE OCUPADOS — YYYY-MM-DD     ║
-  // ╚════════════════════════════════════════════════╝
   const diasOcupados = [
-    '2026-04-14',
-    '2026-04-15',
-    '2026-04-18',
-    '2026-04-22',
-    '2026-04-25',
+    '2026-04-14','2026-04-15','2026-04-18','2026-04-22','2026-04-25'
   ];
 
-  // ╔════════════════════════════════════════════════╗
-  // ║  HORAS OCUPADAS EN UN DÍA CONCRETO            ║
-  // ║  { fecha: 'YYYY-MM-DD', hora: 'HH:MM' }      ║
-  // ╚════════════════════════════════════════════════╝
-  const horasOcupadas = [
-    { fecha: '2026-04-16', hora: '18:00' },
-    { fecha: '2026-04-16', hora: '19:00' },
-    { fecha: '2026-04-17', hora: '20:00' },
-  ];
+  const HORAS = ['19:00','20:00','21:00'];
 
-  // Horas disponibles — solo desde las 18:00 hora española
-  const HORAS = ['18:00','19:00','20:00','21:00','22:00'];
-
+  let horasOcupadas = [];
   let tokenClient, accessToken = null;
   let profSeleccionado = null;
   let fechaSeleccionada = null;
-  let horaSeleccionada = null;
+  let horaSeleccionada  = null;
   let vistaFecha = new Date();
+
+  async function cargarHorasOcupadasDesdeSheet(fecha) {
+    try {
+      const range = encodeURIComponent(SHEET_NAME + '!A2:B2000');
+      const resp  = await gapi.client.request({
+        path:   'https://sheets.googleapis.com/v4/spreadsheets/' + SHEET_ID + '/values/' + range,
+        method: 'GET'
+      });
+      const rows = resp.result.values || [];
+      horasOcupadas = rows.filter(r => r[0] === fecha).map(r => ({ fecha: r[0], hora: r[1] }));
+    } catch(e) {
+      console.warn('Sheet read error:', e);
+      horasOcupadas = [];
+    }
+  }
+
+  async function slotOcupadoEnSheet(fecha, hora) {
+    try {
+      const range = encodeURIComponent(SHEET_NAME + '!A2:B2000');
+      const resp  = await gapi.client.request({
+        path:   'https://sheets.googleapis.com/v4/spreadsheets/' + SHEET_ID + '/values/' + range,
+        method: 'GET'
+      });
+      const rows = resp.result.values || [];
+      return rows.some(r => r[0] === fecha && r[1] === hora);
+    } catch(e) {
+      return false;
+    }
+  }
+
+  async function escribirCitaEnSheet(fecha, hora, nombre, correo, discord, profesor, duracion) {
+    const range = encodeURIComponent(SHEET_NAME + '!A:G');
+    await gapi.client.request({
+      path:   'https://sheets.googleapis.com/v4/spreadsheets/' + SHEET_ID + '/values/' + range + ':append',
+      method: 'POST',
+      params: { valueInputOption: 'RAW', insertDataOption: 'INSERT_ROWS' },
+      body:   { values: [[fecha, hora, nombre, correo, discord, profesor, String(duracion)]] }
+    });
+  }
 
   function renderProfesores() {
     const list = document.getElementById('profesoresList');
     list.innerHTML = '';
-    profesores.forEach((p, i) => {
+    profesores.forEach(function(p, i) {
       const btn = document.createElement('button');
       btn.className = 'prof-card' + (profSeleccionado === i ? ' selected' : '');
-      btn.innerHTML = `<div class="prof-avatar">${p.iniciales}</div><div><div class="prof-name">${p.nombre}</div><div class="prof-sub">Mentor</div></div>`;
-      btn.onclick = () => { profSeleccionado = i; renderProfesores(); };
+      btn.innerHTML = '<div class="prof-avatar">' + p.iniciales + '</div><div><div class="prof-name">' + p.nombre + '</div><div class="prof-sub">Mentor</div></div>';
+      btn.onclick = function() { profSeleccionado = i; renderProfesores(); };
       list.appendChild(btn);
     });
   }
@@ -286,55 +305,73 @@
   }
 
   function renderCalendario() {
-    const hoy = new Date(); hoy.setHours(0,0,0,0);
+    const hoy  = new Date(); hoy.setHours(0,0,0,0);
     const anyo = vistaFecha.getFullYear();
-    const mes = vistaFecha.getMonth();
-    document.getElementById('mesTitulo').textContent = new Date(anyo,mes,1).toLocaleDateString('es-ES',{month:'long',year:'numeric'});
+    const mes  = vistaFecha.getMonth();
+    document.getElementById('mesTitulo').textContent =
+      new Date(anyo, mes, 1).toLocaleDateString('es-ES', { month:'long', year:'numeric' });
     const grid = document.getElementById('diasGrid');
     grid.innerHTML = '';
-    ['L','M','X','J','V','S','D'].forEach(d => {
+    ['L','M','X','J','V','S','D'].forEach(function(d) {
       const el = document.createElement('div'); el.className = 'dia-label'; el.textContent = d; grid.appendChild(el);
     });
-    let offset = new Date(anyo,mes,1).getDay() - 1;
+    let offset = new Date(anyo, mes, 1).getDay() - 1;
     if (offset < 0) offset = 6;
-    for (let i = 0; i < offset; i++) { const v = document.createElement('div'); v.className = 'dia vacio'; grid.appendChild(v); }
-    const total = new Date(anyo,mes+1,0).getDate();
+    for (let i = 0; i < offset; i++) {
+      const v = document.createElement('div'); v.className = 'dia vacio'; grid.appendChild(v);
+    }
+    const total = new Date(anyo, mes+1, 0).getDate();
     for (let d = 1; d <= total; d++) {
-      const fecha = new Date(anyo,mes,d); fecha.setHours(0,0,0,0);
-      const fStr = toDateStr(fecha);
-      const ocupado = diasOcupados.includes(fStr);
-      const pasado = fecha < hoy;
-      const esHoy = fecha.getTime() === hoy.getTime();
-      const sel = fechaSeleccionada === fStr;
-      const el = document.createElement('div');
+      const fecha = new Date(anyo, mes, d); fecha.setHours(0,0,0,0);
+      const fStr  = toDateStr(fecha);
+      const ocupado = diasOcupados.indexOf(fStr) >= 0;
+      const pasado  = fecha < hoy;
+      const esHoy   = fecha.getTime() === hoy.getTime();
+      const sel     = fechaSeleccionada === fStr;
+      const el      = document.createElement('div');
       let cls = 'dia';
-      if (sel) cls += ' seleccionado';
+      if (sel)          cls += ' seleccionado';
       else if (ocupado) cls += ' ocupado';
-      else if (pasado) cls += ' pasado';
-      else if (esHoy) cls += ' hoy';
+      else if (pasado)  cls += ' pasado';
+      else if (esHoy)   cls += ' hoy';
       el.className = cls; el.textContent = d;
       if (!ocupado && !pasado) {
-        el.onclick = () => { fechaSeleccionada = fStr; horaSeleccionada = null; renderCalendario(); renderHoras(); actualizarResumen(); };
+        (function(f) {
+          el.onclick = async function() {
+            fechaSeleccionada = f;
+            horaSeleccionada  = null;
+            renderCalendario();
+            document.getElementById('horasGrid').innerHTML =
+              '<div style="color:var(--muted);font-size:12px;grid-column:1/-1;padding:8px 0">Cargando disponibilidad...</div>';
+            if (accessToken) await cargarHorasOcupadasDesdeSheet(f);
+            renderHoras();
+            actualizarResumen();
+          };
+        })(fStr);
       }
       grid.appendChild(el);
     }
   }
 
-  function cambiarMes(dir) { vistaFecha.setMonth(vistaFecha.getMonth()+dir); renderCalendario(); }
+  function cambiarMes(dir) { vistaFecha.setMonth(vistaFecha.getMonth() + dir); renderCalendario(); }
 
   function renderHoras() {
     const grid = document.getElementById('horasGrid');
     grid.innerHTML = '';
     if (!fechaSeleccionada) {
-      grid.innerHTML = '<div style="color:var(--muted);font-size:12px;grid-column:1/-1;padding:8px 0">Selecciona un día primero</div>';
+      grid.innerHTML = '<div style="color:var(--muted);font-size:12px;grid-column:1/-1;padding:8px 0">Selecciona un dia primero</div>';
       return;
     }
-    HORAS.forEach(h => {
-      const ocupada = horasOcupadas.some(o => o.fecha === fechaSeleccionada && o.hora === h);
+    HORAS.forEach(function(h) {
+      const ocupada = horasOcupadas.some(function(o) { return o.fecha === fechaSeleccionada && o.hora === h; });
       const btn = document.createElement('button');
       btn.className = 'hora-btn' + (ocupada ? ' ocupada' : '') + (horaSeleccionada === h ? ' seleccionada' : '');
       btn.textContent = h;
-      if (!ocupada) btn.onclick = () => { horaSeleccionada = h; renderHoras(); actualizarResumen(); };
+      if (!ocupada) {
+        (function(hora) {
+          btn.onclick = function() { horaSeleccionada = hora; renderHoras(); actualizarResumen(); };
+        })(h);
+      }
       grid.appendChild(btn);
     });
   }
@@ -343,20 +380,22 @@
     const el = document.getElementById('resumenFecha');
     if (fechaSeleccionada && horaSeleccionada) {
       const d = new Date(fechaSeleccionada + 'T' + horaSeleccionada);
-      el.textContent = '📅 ' + d.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'}) + ' · ' + horaSeleccionada + 'h';
+      el.textContent = fechaSeleccionada + ' a las ' + horaSeleccionada + 'h';
       el.className = 'resumen-fecha activo';
     } else if (fechaSeleccionada) {
       el.textContent = 'Ahora elige una hora disponible';
       el.className = 'resumen-fecha';
     } else {
-      el.textContent = 'Selecciona un día para ver las horas';
+      el.textContent = 'Selecciona un dia para ver las horas';
       el.className = 'resumen-fecha';
     }
   }
 
   function initGapi() {
-    gapi.load('client', async () => {
-      await gapi.client.init({ discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest'] });
+    gapi.load('client', async function() {
+      await gapi.client.init({
+        discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest']
+      });
     });
   }
 
@@ -364,64 +403,36 @@
     tokenClient = google.accounts.oauth2.initTokenClient({
       client_id: CLIENT_ID,
       scope: SCOPES,
-      callback: (resp) => {
+      callback: async function(resp) {
         if (resp.error) { showStatus('Error al conectar: ' + resp.error, 'error'); return; }
         accessToken = resp.access_token;
         gapi.client.setToken({ access_token: accessToken });
         document.getElementById('authSection').style.display = 'none';
         document.getElementById('authBadge').classList.add('visible');
-      },
+        if (fechaSeleccionada) {
+          await cargarHorasOcupadasDesdeSheet(fechaSeleccionada);
+          renderHoras();
+        }
+      }
     });
   }
 
   function signIn() { tokenClient.requestAccessToken({ prompt: 'consent' }); }
 
-  async function slotOcupado(startISO, endISO) {
-    // Consulta el calendario de ADMIN para ver si ya hay una cita ChannelRise en ese hueco
-    try {
-      const resp = await gapi.client.calendar.events.list({
-        calendarId: ADMIN_EMAIL,
-        timeMin: startISO,
-        timeMax: endISO,
-        singleEvents: true,
-        q: 'Cita ChannelRise'
-      });
-      const items = resp.result.items || [];
-      return items.length > 0;
-    } catch(e) {
-      // Si no tenemos acceso al calendario del admin (normal), consultamos freebusy
-      try {
-        const fb = await gapi.client.request({
-          path: 'https://www.googleapis.com/calendar/v3/freeBusy',
-          method: 'POST',
-          body: {
-            timeMin: startISO,
-            timeMax: endISO,
-            items: [{ id: ADMIN_EMAIL }]
-          }
-        });
-        const busy = fb.result.calendars?.[ADMIN_EMAIL]?.busy || [];
-        return busy.length > 0;
-      } catch(e2) {
-        return false; // Si no podemos comprobar, dejamos pasar y confiamos en el manual
-      }
-    }
-  }
-
   async function reservarCita() {
-    const nombre  = document.getElementById('nombre').value.trim();
-    const correo  = document.getElementById('correo').value.trim();
-    const discord = document.getElementById('discord').value.trim();
+    const nombre   = document.getElementById('nombre').value.trim();
+    const correo   = document.getElementById('correo').value.trim();
+    const discord  = document.getElementById('discord').value.trim();
     const duracion = parseInt(document.getElementById('duracion').value);
-    const motivo  = document.getElementById('motivo').value.trim();
+    const motivo   = document.getElementById('motivo').value.trim();
 
-    if (!nombre)                 { showStatus('Introduce tu nombre.', 'error'); return; }
-    if (!correo)                 { showStatus('Introduce tu correo.', 'error'); return; }
-    if (!discord)                { showStatus('Introduce tu usuario de Discord.', 'error'); return; }
-    if (profSeleccionado === null){ showStatus('Selecciona un profesor.', 'error'); return; }
-    if (!fechaSeleccionada)      { showStatus('Selecciona una fecha en el calendario.', 'error'); return; }
-    if (!horaSeleccionada)       { showStatus('Selecciona una hora disponible.', 'error'); return; }
-    if (!accessToken)            { showStatus('Conecta tu cuenta de Google primero.', 'error'); return; }
+    if (!nombre)                  { showStatus('Introduce tu nombre.', 'error'); return; }
+    if (!correo)                  { showStatus('Introduce tu correo.', 'error'); return; }
+    if (!discord)                 { showStatus('Introduce tu usuario de Discord.', 'error'); return; }
+    if (profSeleccionado === null) { showStatus('Selecciona un profesor.', 'error'); return; }
+    if (!fechaSeleccionada)       { showStatus('Selecciona una fecha en el calendario.', 'error'); return; }
+    if (!horaSeleccionada)        { showStatus('Selecciona una hora disponible.', 'error'); return; }
+    if (!accessToken)             { showStatus('Conecta tu cuenta de Google primero.', 'error'); return; }
 
     const prof  = profesores[profSeleccionado];
     const start = new Date(fechaSeleccionada + 'T' + horaSeleccionada + ':00');
@@ -430,11 +441,9 @@
     const btn = document.getElementById('btnSubmit');
     btn.disabled = true; btn.textContent = 'COMPROBANDO...';
 
-    // Verificar que el slot sigue libre antes de crear
-    const ocupado = await slotOcupado(start.toISOString(), end.toISOString());
+    const ocupado = await slotOcupadoEnSheet(fechaSeleccionada, horaSeleccionada);
     if (ocupado) {
-      showStatus('Esa hora ya ha sido reservada por otro alumno. Por favor elige otra.', 'error');
-      // Marcar la hora como ocupada visualmente
+      showStatus('Esa hora acaba de ser reservada por otro alumno. Por favor elige otra.', 'error');
       horasOcupadas.push({ fecha: fechaSeleccionada, hora: horaSeleccionada });
       horaSeleccionada = null;
       renderHoras();
@@ -443,51 +452,46 @@
       return;
     }
 
-    // El evento se guarda en el calendario del usuario (primary)
-    // y tanto el usuario como tú (ADMIN_EMAIL) recibís la invitación
-    const event = {
-      summary: `Cita ChannelRise — ${nombre} con ${prof.nombre}`,
-      description: `👤 Nombre: ${nombre}\n📧 Correo: ${correo}\n💬 Discord: ${discord}\n🎓 Profesor: ${prof.nombre}\n\n📝 ${motivo || 'Sin motivo especificado.'}`,
-      start: { dateTime: start.toISOString(), timeZone: 'Europe/Madrid' },
-      end:   { dateTime: end.toISOString(),   timeZone: 'Europe/Madrid' },
-      attendees: [
-        { email: correo },                        // Alumno
-        { email: ADMIN_EMAIL, organizer: true }   // Tú — recibes la cita siempre
-      ],
-      reminders: {
-        useDefault: false,
-        overrides: [
-          { method: 'email', minutes: 60 },
-          { method: 'popup', minutes: 30 }
-        ]
-      },
-      sendUpdates: 'all'   // Google envía email de confirmación a todos los asistentes
-    };
-
-    const btn = document.getElementById('btnSubmit');
     btn.textContent = 'RESERVANDO...';
 
     try {
+      await escribirCitaEnSheet(
+        fechaSeleccionada, horaSeleccionada,
+        nombre, correo, discord, prof.nombre, duracion
+      );
+
       await gapi.client.calendar.events.insert({
         calendarId: CALENDAR_ID,
-        resource: event,
-        sendUpdates: 'all'
+        sendUpdates: 'all',
+        resource: {
+          summary: 'Cita ChannelRise - ' + nombre + ' con ' + prof.nombre,
+          description: 'Nombre: ' + nombre + '\nCorreo: ' + correo + '\nDiscord: ' + discord + '\nProfesor: ' + prof.nombre + '\n\n' + (motivo || 'Sin motivo especificado.'),
+          start: { dateTime: start.toISOString(), timeZone: 'Europe/Madrid' },
+          end:   { dateTime: end.toISOString(),   timeZone: 'Europe/Madrid' },
+          attendees: [{ email: correo }, { email: ADMIN_EMAIL }],
+          reminders: {
+            useDefault: false,
+            overrides: [{ method: 'email', minutes: 60 }, { method: 'popup', minutes: 30 }]
+          }
+        }
       });
+
+      horasOcupadas.push({ fecha: fechaSeleccionada, hora: horaSeleccionada });
 
       const opts = { weekday:'long', day:'numeric', month:'long', year:'numeric' };
       document.getElementById('successDetail').innerHTML =
-        `<strong>Nombre:</strong> ${nombre}<br>` +
-        `<strong>Profesor:</strong> ${prof.nombre}<br>` +
-        `<strong>Fecha:</strong> ${start.toLocaleDateString('es-ES', opts)} a las ${horaSeleccionada}h<br>` +
-        `<strong>Duración:</strong> ${duracion} min<br>` +
-        `<strong>Discord:</strong> ${discord}<br>` +
-        `<strong>Correo:</strong> ${correo}`;
+        '<strong>Nombre:</strong> ' + nombre + '<br>' +
+        '<strong>Profesor:</strong> ' + prof.nombre + '<br>' +
+        '<strong>Fecha:</strong> ' + start.toLocaleDateString('es-ES', opts) + ' a las ' + horaSeleccionada + 'h<br>' +
+        '<strong>Duracion:</strong> ' + duracion + ' min<br>' +
+        '<strong>Discord:</strong> ' + discord + '<br>' +
+        '<strong>Correo:</strong> ' + correo;
 
       document.getElementById('successOverlay').classList.add('visible');
       showStatus('', '');
     } catch(err) {
       console.error(err);
-      const msg = err.result?.error?.message || 'Error desconocido';
+      const msg = (err.result && err.result.error && err.result.error.message) || 'Error desconocido';
       showStatus('Error al crear la cita: ' + msg, 'error');
     }
 
@@ -502,12 +506,12 @@
 
   function closeSuccess() {
     document.getElementById('successOverlay').classList.remove('visible');
-    ['nombre','correo','discord','motivo'].forEach(id => document.getElementById(id).value = '');
+    ['nombre','correo','discord','motivo'].forEach(function(id) { document.getElementById(id).value = ''; });
     profSeleccionado = null; fechaSeleccionada = null; horaSeleccionada = null;
     renderProfesores(); renderCalendario(); renderHoras(); actualizarResumen();
   }
 
-  window.onload = () => {
+  window.onload = function() {
     renderProfesores();
     renderCalendario();
     renderHoras();
