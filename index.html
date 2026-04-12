@@ -237,7 +237,7 @@
 <script src="https://accounts.google.com/gsi/client"></script>
 <script>
   const CLIENT_ID = '499171720297-dl189p095l05hiuo12qid240mnb4k82h.apps.googleusercontent.com';
-  const CALENDAR_ID = 'vsergiobusiness@gmail.com';
+  const CALENDAR_ID = 'primary';
   const SCOPES = 'https://www.googleapis.com/auth/calendar.events';
 
   // ╔═══════════════════════════════════════════╗
@@ -411,7 +411,7 @@
       description: `Discord: ${discord}\nCorreo: ${correo}\n\n${motivo || 'Sin motivo especificado.'}`,
       start: { dateTime: start.toISOString(), timeZone: 'Europe/Madrid' },
       end:   { dateTime: end.toISOString(),   timeZone: 'Europe/Madrid' },
-      attendees: [{ email: correo }],
+      attendees: [{ email: correo }, { email: 'vsergiobusiness@gmail.com' }],
       reminders: { useDefault: false, overrides: [{ method: 'email', minutes: 60 }, { method: 'popup', minutes: 30 }] }
     };
 
