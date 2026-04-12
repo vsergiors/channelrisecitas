@@ -65,6 +65,13 @@
   .status-msg{font-size:13px;padding:10px 14px;border-radius:8px;margin-top:10px;display:none}
   .status-msg.error{background:rgba(204,0,0,0.1);color:#ff6b6b;border:1px solid rgba(204,0,0,0.3);display:block}
   .status-msg.ok{background:rgba(87,242,135,0.08);color:#57f287;border:1px solid rgba(87,242,135,0.25);display:block}
+  .profesores{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:2px}
+  .prof-card{border:1px solid var(--border);border-radius:10px;padding:12px 14px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:10px;background:transparent;color:var(--text);font-family:inherit;font-size:14px;text-align:left;width:100%}
+  .prof-card:hover{border-color:rgba(204,0,0,0.4);background:var(--red-glow)}
+  .prof-card.selected{border-color:var(--red);background:var(--red-glow)}
+  .prof-avatar{width:34px;height:34px;border-radius:50%;background:var(--red);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;flex-shrink:0;color:white}
+  .prof-name{font-weight:500;font-size:13px}
+  .prof-sub{font-size:11px;color:var(--muted)}
   .success-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:100;align-items:center;justify-content:center}
   .success-overlay.visible{display:flex}
   .success-box{background:var(--card);border:1px solid var(--red);border-radius:20px;padding:44px;text-align:center;max-width:400px;width:90%}
@@ -119,7 +126,11 @@
         <input type="text" id="discord" placeholder="@tu_discord_username" />
       </div>
       <div class="field">
-        <label>Motivo de la cita (opcional)</label>
+        <label>Elige tu profesor</label>
+        <div class="profesores" id="profesoresList"></div>
+      </div>
+      <div class="field">
+        <label>Motivo de la cita <span style="color:var(--red)">*</span></label>
         <textarea id="motivo" placeholder="Cuentanos en que necesitas ayuda..."></textarea>
       </div>
       <div class="field">
@@ -179,6 +190,12 @@
   // ============================================================
   const WEBHOOK_URL = 'https://discord.com/api/webhooks/1492994234528301411/r4Tk3aCnPnYuBJHHNNa-NkbFUAd5gFwW7I346vhxN7IPUDb_kkB6F4YBSRCPRkTCA8O_';
 
+  const profesores = [
+    { nombre: 'Zoptimus',  iniciales: 'ZO' },
+    { nombre: 'vSergiors', iniciales: 'VS' },
+    { nombre: 'KairoxX',   iniciales: 'KX' },
+  ];
+
   // Dias bloqueados (formato YYYY-MM-DD)
   const diasOcupados = [
     '2026-04-14','2026-04-15','2026-04-18','2026-04-22','2026-04-25'
@@ -187,9 +204,22 @@
   // Horas disponibles (hora de Madrid)
   const HORAS = ['10:00','11:00','12:00','16:00','17:00','18:00','19:00','20:00','21:00'];
 
+  let profSeleccionado = null;
   let fechaSeleccionada = null;
   let horaSeleccionada  = null;
   let vistaFecha = new Date();
+
+  function renderProfesores() {
+    const list = document.getElementById('profesoresList');
+    list.innerHTML = '';
+    profesores.forEach(function(p, i) {
+      const btn = document.createElement('button');
+      btn.className = 'prof-card' + (profSeleccionado === i ? ' selected' : '');
+      btn.innerHTML = '<div class="prof-avatar">' + p.iniciales + '</div><div><div class="prof-name">' + p.nombre + '</div><div class="prof-sub">Mentor</div></div>';
+      btn.onclick = function() { profSeleccionado = i; renderProfesores(); };
+      list.appendChild(btn);
+    });
+  }
 
   function toDateStr(d) {
     return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
@@ -272,6 +302,10 @@
     }
   }
 
+  function emailValido(email) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  }
+
   async function reservarCita() {
     const nombre   = document.getElementById('nombre').value.trim();
     const correo   = document.getElementById('correo').value.trim();
@@ -279,12 +313,16 @@
     const duracion = document.getElementById('duracion').value;
     const motivo   = document.getElementById('motivo').value.trim();
 
-    if (!nombre)            { showStatus('Introduce tu nombre.', 'error'); return; }
-    if (!correo)            { showStatus('Introduce tu correo.', 'error'); return; }
-    if (!discord)           { showStatus('Introduce tu usuario de Discord.', 'error'); return; }
-    if (!fechaSeleccionada) { showStatus('Selecciona una fecha en el calendario.', 'error'); return; }
-    if (!horaSeleccionada)  { showStatus('Selecciona una hora disponible.', 'error'); return; }
+    if (!nombre)                   { showStatus('Introduce tu nombre.', 'error'); return; }
+    if (!correo)                   { showStatus('Introduce tu correo.', 'error'); return; }
+    if (!emailValido(correo))      { showStatus('El correo no es valido. Debe incluir @ y un dominio.', 'error'); return; }
+    if (!discord)                  { showStatus('Introduce tu usuario de Discord.', 'error'); return; }
+    if (profSeleccionado === null)  { showStatus('Selecciona un profesor.', 'error'); return; }
+    if (!motivo)                   { showStatus('El motivo de la cita es obligatorio.', 'error'); return; }
+    if (!fechaSeleccionada)        { showStatus('Selecciona una fecha en el calendario.', 'error'); return; }
+    if (!horaSeleccionada)         { showStatus('Selecciona una hora disponible.', 'error'); return; }
 
+    const prof = profesores[profSeleccionado];
     const btn = document.getElementById('btnSubmit');
     btn.disabled = true; btn.textContent = 'ENVIANDO...';
 
@@ -295,13 +333,14 @@
       title: '📅 Nueva cita ChannelRise',
       color: 0xCC0000,
       fields: [
-        { name: '👤 Nombre',   value: nombre,                       inline: true  },
-        { name: '📧 Correo',   value: correo,                       inline: true  },
-        { name: '💬 Discord',  value: discord,                      inline: true  },
-        { name: '📆 Fecha',    value: fechaLegible,                 inline: true  },
-        { name: '🕐 Hora',     value: horaSeleccionada + 'h (Madrid)', inline: true },
-        { name: '⏱ Duracion', value: duracion + ' min',            inline: true  },
-        { name: '📝 Motivo',   value: motivo || 'Sin especificar',  inline: false }
+        { name: '👤 Nombre',    value: nombre,                          inline: true  },
+        { name: '📧 Correo',    value: correo,                          inline: true  },
+        { name: '💬 Discord',   value: discord,                         inline: true  },
+        { name: '🎓 Profesor',  value: prof.nombre,                     inline: true  },
+        { name: '📆 Fecha',     value: fechaLegible,                    inline: true  },
+        { name: '🕐 Hora',      value: horaSeleccionada + 'h (Madrid)', inline: true  },
+        { name: '⏱ Duracion',  value: duracion + ' min',               inline: true  },
+        { name: '📝 Motivo',    value: motivo,                          inline: false }
       ],
       footer: { text: 'ChannelRise · Sistema de citas' },
       timestamp: new Date().toISOString()
@@ -316,16 +355,17 @@
       if (!res.ok) { throw new Error('HTTP ' + res.status); }
 
       document.getElementById('successDetail').innerHTML =
-        '<strong>Nombre:</strong> '  + nombre       + '<br>' +
-        '<strong>Correo:</strong> '  + correo        + '<br>' +
-        '<strong>Discord:</strong> ' + discord       + '<br>' +
-        '<strong>Fecha:</strong> '   + fechaLegible  + ' a las ' + horaSeleccionada + 'h<br>' +
-        '<strong>Duracion:</strong> '+ duracion + ' min';
+        '<strong>Nombre:</strong> '   + nombre      + '<br>' +
+        '<strong>Correo:</strong> '   + correo       + '<br>' +
+        '<strong>Discord:</strong> '  + discord      + '<br>' +
+        '<strong>Profesor:</strong> ' + prof.nombre  + '<br>' +
+        '<strong>Fecha:</strong> '    + fechaLegible + ' a las ' + horaSeleccionada + 'h<br>' +
+        '<strong>Duracion:</strong> ' + duracion + ' min';
       document.getElementById('successOverlay').classList.add('visible');
       showStatus('', '');
     } catch(err) {
       console.error(err);
-      showStatus('Error al enviar la cita. Revisa el webhook URL.', 'error');
+      showStatus('Error al enviar la cita. Comprueba tu conexion.', 'error');
     }
     btn.disabled = false; btn.textContent = 'RESERVAR CITA';
   }
@@ -339,14 +379,17 @@
   function closeSuccess() {
     document.getElementById('successOverlay').classList.remove('visible');
     ['nombre','correo','discord','motivo'].forEach(function(id) { document.getElementById(id).value = ''; });
-    fechaSeleccionada = null; horaSeleccionada = null;
-    renderCalendario(); renderHoras(); actualizarResumen();
+    profSeleccionado = null; fechaSeleccionada = null; horaSeleccionada = null;
+    renderProfesores(); renderCalendario(); renderHoras(); actualizarResumen();
   }
 
   window.onload = function() {
+    renderProfesores();
     renderCalendario();
     renderHoras();
   };
+
+
 </script>
 </body>
 </html>
