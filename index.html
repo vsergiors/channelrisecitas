@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ChannelRise — Reserva tu cita</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --red: #CC0000; --red-dark: #990000; --red-glow: rgba(204,0,0,0.15);
+    --black: #0a0a0a; --card: #1a1a1a; --border: rgba(255,255,255,0.07);
+    --text: #f0f0f0; --muted: #666;
+    --font-display: 'Bebas Neue', sans-serif; --font-body: 'DM Sans', sans-serif;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--black); color:var(--text); font-family:var(--font-body); min-height:100vh; overflow-x:hidden; }
+  body::before { content:''; position:fixed; inset:0; background-image:repeating-linear-gradient(0deg,transparent,transparent 60px,rgba(255,255,255,0.015) 60px,rgba(255,255,255,0.015) 61px),repeating-linear-gradient(90deg,transparent,transparent 60px,rgba(255,255,255,0.015) 60px,rgba(255,255,255,0.015) 61px); pointer-events:none; z-index:0; }
+  .page { position:relative; z-index:1; }
+
+  header { padding:32px 40px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--border); }
+  .logo { display:flex; align-items:center; gap:12px; }
+  .logo-icon { width:40px; height:40px; background:var(--red); border-radius:8px; display:flex; align-items:center; justify-content:center; }
+  .logo-icon svg { width:22px; height:22px; fill:white; }
+  .logo-name { font-family:var(--font-display); font-size:28px; letter-spacing:1px; color:white; }
+  .logo-name span { color:var(--red); }
+  .header-tag { font-size:12px; color:var(--muted); letter-spacing:2px; text-transform:uppercase; }
+
+  .hero { text-align:center; padding:80px 40px 60px; }
+  .hero-badge { display:inline-block; background:var(--red-glow); border:1px solid var(--red); color:var(--red); font-size:11px; letter-spacing:3px; text-transform:uppercase; padding:6px 16px; border-radius:20px; margin-bottom:24px; }
+  .hero h1 { font-family:var(--font-display); font-size:clamp(52px,8vw,96px); line-height:0.95; letter-spacing:2px; margin-bottom:20px; }
+  .hero h1 span { color:var(--red); }
+  .hero p { font-size:16px; color:var(--muted); max-width:480px; margin:0 auto; line-height:1.7; }
+
+  .main { max-width:1100px; margin:0 auto; padding:0 40px 80px; display:grid; grid-template-columns:1fr 1fr; gap:32px; align-items:start; }
+
+  .card { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:32px; }
+  .card-title { font-family:var(--font-display); font-size:22px; letter-spacing:1px; margin-bottom:24px; display:flex; align-items:center; gap:10px; }
+  .card-title::before { content:''; display:block; width:4px; height:22px; background:var(--red); border-radius:2px; }
+
+  .field { margin-bottom:20px; }
+  label { display:block; font-size:11px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); margin-bottom:8px; }
+  input, select, textarea { width:100%; background:rgba(255,255,255,0.04); border:1px solid var(--border); border-radius:8px; color:var(--text); font-family:var(--font-body); font-size:14px; padding:12px 16px; transition:border-color 0.2s,background 0.2s; outline:none; appearance:none; }
+  input:focus, select:focus, textarea:focus { border-color:var(--red); background:rgba(204,0,0,0.05); }
+  select option { background:#1a1a1a; }
+  textarea { resize:vertical; min-height:80px; }
+
+  .profesores { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .prof-card { border:1px solid var(--border); border-radius:10px; padding:14px; cursor:pointer; transition:all 0.2s; display:flex; align-items:center; gap:10px; background:transparent; color:var(--text); font-family:var(--font-body); font-size:14px; text-align:left; }
+  .prof-card:hover { border-color:rgba(204,0,0,0.4); background:var(--red-glow); }
+  .prof-card.selected { border-color:var(--red); background:var(--red-glow); }
+  .prof-avatar { width:36px; height:36px; border-radius:50%; background:var(--red); display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:500; flex-shrink:0; color:white; }
+  .prof-name { font-weight:500; font-size:13px; }
+  .prof-sub { font-size:11px; color:var(--muted); }
+
+  .admin-note { font-size:11px; color:#3a3a3a; border:1px dashed #2a2a2a; border-radius:8px; padding:10px 14px; margin-top:10px; line-height:1.7; }
+  .admin-note code { color:#555; background:rgba(255,255,255,0.05); padding:1px 5px; border-radius:3px; }
+
+  /* Mini calendario */
+  .dias-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+  .dias-nav { background:transparent; border:1px solid var(--border); color:var(--text); width:28px; height:28px; border-radius:6px; cursor:pointer; font-size:16px; display:flex; align-items:center; justify-content:center; transition:border-color 0.2s; line-height:1; }
+  .dias-nav:hover { border-color:var(--red); color:var(--red); }
+  .dias-mes { font-size:13px; font-weight:500; text-transform:capitalize; }
+  .dias-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:4px; text-align:center; }
+  .dia-label { font-size:10px; color:var(--muted); letter-spacing:1px; padding:4px 0; text-transform:uppercase; }
+  .dia { width:100%; aspect-ratio:1; border-radius:6px; font-size:12px; display:flex; align-items:center; justify-content:center; cursor:pointer; border:1px solid transparent; transition:all 0.15s; color:var(--text); background:transparent; position:relative; }
+  .dia:hover:not(.ocupado):not(.pasado):not(.vacio) { border-color:var(--red); color:var(--red); }
+  .dia.seleccionado { background:var(--red); color:white; border-color:var(--red); }
+  .dia.ocupado { background:rgba(204,0,0,0.1); color:#ff4444; border-color:rgba(204,0,0,0.2); cursor:not-allowed; }
+  .dia.ocupado::after { content:'×'; font-size:10px; position:absolute; top:1px; right:3px; color:rgba(255,68,68,0.7); }
+  .dia.pasado { color:#2d2d2d; cursor:not-allowed; }
+  .dia.vacio { cursor:default; }
+  .dia.hoy:not(.seleccionado) { border-color:rgba(204,0,0,0.5); color:var(--red); }
+  .dias-leyenda { display:flex; gap:16px; margin-top:10px; font-size:11px; color:var(--muted); flex-wrap:wrap; }
+  .leyenda-item { display:flex; align-items:center; gap:5px; }
+  .leyenda-dot { width:8px; height:8px; border-radius:2px; flex-shrink:0; }
+
+  .horas-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin-top:8px; }
+  .hora-btn { background:rgba(255,255,255,0.04); border:1px solid var(--border); border-radius:6px; color:var(--text); font-family:var(--font-body); font-size:12px; padding:8px 4px; cursor:pointer; transition:all 0.15s; text-align:center; }
+  .hora-btn:hover:not(.ocupada) { border-color:var(--red); color:var(--red); }
+  .hora-btn.seleccionada { background:var(--red); border-color:var(--red); color:white; }
+  .hora-btn.ocupada { color:#2d2d2d; cursor:not-allowed; text-decoration:line-through; }
+
+  .resumen-fecha { margin-top:16px; font-size:13px; color:var(--muted); min-height:20px; text-align:center; padding:10px; border-radius:8px; transition:all 0.2s; }
+  .resumen-fecha.activo { background:var(--red-glow); border:1px solid rgba(204,0,0,0.2); color:var(--red); }
+
+  .btn-submit { width:100%; padding:16px; background:var(--red); color:white; border:none; border-radius:10px; font-family:var(--font-display); font-size:20px; letter-spacing:2px; cursor:pointer; transition:all 0.2s; margin-top:8px; }
+  .btn-submit:hover { background:var(--red-dark); transform:translateY(-1px); }
+  .btn-submit:disabled { background:#333; color:#555; cursor:not-allowed; transform:none; }
+
+  .auth-section { text-align:center; padding:24px; background:var(--red-glow); border:1px solid var(--red); border-radius:12px; margin-bottom:24px; }
+  .auth-section p { font-size:14px; color:var(--muted); margin-bottom:16px; line-height:1.6; }
+  .btn-google { display:inline-flex; align-items:center; gap:10px; background:white; color:#333; border:none; border-radius:8px; padding:12px 24px; font-family:var(--font-body); font-size:14px; font-weight:500; cursor:pointer; transition:all 0.2s; }
+  .btn-google:hover { background:#f0f0f0; }
+  .btn-google svg { width:18px; height:18px; }
+
+  .auth-badge { display:none; align-items:center; gap:8px; background:rgba(87,242,135,0.1); border:1px solid rgba(87,242,135,0.3); border-radius:20px; padding:6px 14px; font-size:12px; color:#57f287; margin-bottom:20px; }
+  .auth-badge.visible { display:inline-flex; }
+  .auth-badge::before { content:''; width:7px; height:7px; background:#57f287; border-radius:50%; }
+
+  .status-msg { font-size:13px; padding:10px 14px; border-radius:8px; margin-top:12px; display:none; }
+  .status-msg.error { background:rgba(204,0,0,0.1); color:#ff6b6b; border:1px solid rgba(204,0,0,0.3); display:block; }
+
+  .success-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:100; align-items:center; justify-content:center; }
+  .success-overlay.visible { display:flex; }
+  .success-box { background:var(--card); border:1px solid var(--red); border-radius:20px; padding:48px; text-align:center; max-width:420px; animation:popIn 0.3s ease; }
+  @keyframes popIn { from{transform:scale(0.9);opacity:0} to{transform:scale(1);opacity:1} }
+  .success-icon { width:64px; height:64px; background:var(--red); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 24px; font-size:28px; }
+  .success-box h2 { font-family:var(--font-display); font-size:36px; margin-bottom:12px; }
+  .success-box p { color:var(--muted); font-size:14px; line-height:1.7; margin-bottom:24px; }
+  .success-detail { background:rgba(255,255,255,0.04); border-radius:10px; padding:16px; text-align:left; margin-bottom:24px; font-size:13px; line-height:2; }
+  .success-detail strong { color:var(--red); }
+  .btn-close { background:var(--red); color:white; border:none; border-radius:8px; padding:12px 32px; font-family:var(--font-display); font-size:18px; letter-spacing:1px; cursor:pointer; }
+
+  @media (max-width:768px) {
+    header { padding:20px; } .hero { padding:48px 20px 40px; }
+    .main { grid-template-columns:1fr; padding:0 20px 60px; }
+    .profesores { grid-template-columns:1fr; } .horas-grid { grid-template-columns:repeat(3,1fr); }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header>
+    <div class="logo">
+      <div class="logo-icon"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
+      <div class="logo-name">Channel<span>Rise</span></div>
+    </div>
+    <div class="header-tag">Sistema de citas</div>
+  </header>
+
+  <div class="hero">
+    <div class="hero-badge">&#9679; Reserva tu sesión</div>
+    <h1>HABLA CON<br>TU <span>MENTOR</span></h1>
+    <p>Elige tu profesor, escoge el día y hora, y da el siguiente paso en tu canal de YouTube.</p>
+  </div>
+
+  <div class="main">
+
+    <!-- Formulario -->
+    <div class="card">
+      <div class="card-title">Tu información</div>
+      <div class="auth-badge" id="authBadge">Conectado con Google</div>
+
+      <div class="auth-section" id="authSection">
+        <p>Para guardar la cita en el calendario necesitas conectar tu cuenta de Google primero.</p>
+        <button class="btn-google" onclick="signIn()">
+          <svg viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+          Conectar con Google
+        </button>
+      </div>
+
+      <div class="field">
+        <label>Nombre completo</label>
+        <input type="text" id="nombre" placeholder="Tu nombre" />
+      </div>
+      <div class="field">
+        <label>Correo de contacto</label>
+        <input type="email" id="correo" placeholder="tucorreo@gmail.com" />
+      </div>
+      <div class="field">
+        <label>Usuario de Discord</label>
+        <input type="text" id="discord" placeholder="@tunombre" />
+      </div>
+
+      <div class="field">
+        <label>Elige tu profesor</label>
+        <div class="profesores" id="profesoresList"></div>
+        <!--
+        ╔══════════════════════════════════════════════╗
+        ║  AÑADIR PROFESORES — edita el array abajo   ║
+        ║  en el <script>, busca "const profesores"   ║
+        ║  y añade: { nombre: 'NombreYT', iniciales: 'XX' }
+        ╚══════════════════════════════════════════════╝
+        -->
+        <div class="admin-note">Para añadir profesores, edita <code>const profesores</code> en el script al final del HTML.</div>
+      </div>
+
+      <div class="field">
+        <label>Motivo de la cita (opcional)</label>
+        <textarea id="motivo" placeholder="Cuéntanos en qué necesitas ayuda..."></textarea>
+      </div>
+
+      <div class="field">
+        <label>Duración de la sesión</label>
+        <select id="duracion">
+          <option value="30">30 minutos</option>
+          <option value="60" selected>1 hora</option>
+          <option value="90">1 hora 30 min</option>
+          <option value="120">2 horas</option>
+        </select>
+      </div>
+
+      <button class="btn-submit" id="btnSubmit" onclick="reservarCita()">RESERVAR CITA</button>
+      <div class="status-msg" id="statusMsg"></div>
+    </div>
+
+    <!-- Calendario -->
+    <div class="card">
+      <div class="card-title">Elige tu fecha y hora</div>
+
+      <div class="dias-header">
+        <button class="dias-nav" onclick="cambiarMes(-1)">&#8249;</button>
+        <span class="dias-mes" id="mesTitulo"></span>
+        <button class="dias-nav" onclick="cambiarMes(1)">&#8250;</button>
+      </div>
+      <div class="dias-grid" id="diasGrid"></div>
+      <div class="dias-leyenda">
+        <div class="leyenda-item"><div class="leyenda-dot" style="background:var(--red)"></div> Seleccionado</div>
+        <div class="leyenda-item"><div class="leyenda-dot" style="background:rgba(204,0,0,0.15);border:1px solid rgba(204,0,0,0.3)"></div> Ocupado</div>
+        <div class="leyenda-item"><div class="leyenda-dot" style="background:#1a1a1a;border:1px solid #333"></div> Disponible</div>
+      </div>
+
+      <div class="field" style="margin-top:24px">
+        <label>Hora disponible</label>
+        <div class="horas-grid" id="horasGrid"></div>
+      </div>
+
+      <div class="resumen-fecha" id="resumenFecha">Selecciona un día para ver las horas</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Success -->
+<div class="success-overlay" id="successOverlay">
+  <div class="success-box">
+    <div class="success-icon">✓</div>
+    <h2>CITA RESERVADA</h2>
+    <p>Tu sesión ha sido añadida al calendario. Te esperamos.</p>
+    <div class="success-detail" id="successDetail"></div>
+    <button class="btn-close" onclick="closeSuccess()">CERRAR</button>
+  </div>
+</div>
+
+<script src="https://apis.google.com/js/api.js"></script>
+<script src="https://accounts.google.com/gsi/client"></script>
+<script>
+  const CLIENT_ID = '499171720297-dl189p095l05hiuo12qid240mnb4k82h.apps.googleusercontent.com';
+  const CALENDAR_ID = 'vsergiobusiness@gmail.com';
+  const SCOPES = 'https://www.googleapis.com/auth/calendar.events';
+
+  // ╔═══════════════════════════════════════════╗
+  // ║  AÑADE PROFESORES AQUÍ                   ║
+  // ║  { nombre: 'NombreYT', iniciales: 'XX' } ║
+  // ╚═══════════════════════════════════════════╝
+  const profesores = [
+    { nombre: 'Zoptimus',  iniciales: 'ZO' },
+    { nombre: 'vSergiors', iniciales: 'VS' },
+    { nombre: 'KairoxX',   iniciales: 'KX' },
+  ];
+
+  // ╔════════════════════════════════════════════════╗
+  // ║  DÍAS COMPLETAMENTE OCUPADOS — formato YYYY-MM-DD
+  // ╚════════════════════════════════════════════════╝
+  const diasOcupados = [
+    '2026-04-14',
+    '2026-04-15',
+    '2026-04-18',
+    '2026-04-22',
+    '2026-04-25',
+  ];
+
+  // ╔════════════════════════════════════════════════════════╗
+  // ║  HORAS OCUPADAS EN UN DÍA CONCRETO                    ║
+  // ║  { fecha: 'YYYY-MM-DD', hora: 'HH:MM' }              ║
+  // ╚════════════════════════════════════════════════════════╝
+  const horasOcupadas = [
+    { fecha: '2026-04-16', hora: '10:00' },
+    { fecha: '2026-04-16', hora: '11:00' },
+    { fecha: '2026-04-17', hora: '16:00' },
+    { fecha: '2026-04-17', hora: '17:00' },
+  ];
+
+  // Horas disponibles generales
+  const HORAS = ['09:00','10:00','11:00','12:00','13:00','16:00','17:00','18:00','19:00','20:00'];
+
+  let tokenClient, accessToken = null;
+  let profSeleccionado = null;
+  let fechaSeleccionada = null;
+  let horaSeleccionada = null;
+  let vistaFecha = new Date();
+
+  function renderProfesores() {
+    const list = document.getElementById('profesoresList');
+    list.innerHTML = '';
+    profesores.forEach((p, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'prof-card' + (profSeleccionado === i ? ' selected' : '');
+      btn.innerHTML = `<div class="prof-avatar">${p.iniciales}</div><div><div class="prof-name">${p.nombre}</div><div class="prof-sub">Mentor</div></div>`;
+      btn.onclick = () => { profSeleccionado = i; renderProfesores(); };
+      list.appendChild(btn);
+    });
+  }
+
+  function toDateStr(d) {
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  }
+
+  function renderCalendario() {
+    const hoy = new Date(); hoy.setHours(0,0,0,0);
+    const anyo = vistaFecha.getFullYear();
+    const mes = vistaFecha.getMonth();
+    document.getElementById('mesTitulo').textContent = new Date(anyo,mes,1).toLocaleDateString('es-ES',{month:'long',year:'numeric'});
+    const grid = document.getElementById('diasGrid');
+    grid.innerHTML = '';
+    ['L','M','X','J','V','S','D'].forEach(d => {
+      const el = document.createElement('div'); el.className = 'dia-label'; el.textContent = d; grid.appendChild(el);
+    });
+    let offset = new Date(anyo,mes,1).getDay() - 1;
+    if (offset < 0) offset = 6;
+    for (let i = 0; i < offset; i++) { const v = document.createElement('div'); v.className = 'dia vacio'; grid.appendChild(v); }
+    const total = new Date(anyo,mes+1,0).getDate();
+    for (let d = 1; d <= total; d++) {
+      const fecha = new Date(anyo,mes,d); fecha.setHours(0,0,0,0);
+      const fStr = toDateStr(fecha);
+      const ocupado = diasOcupados.includes(fStr);
+      const pasado = fecha < hoy;
+      const esHoy = fecha.getTime() === hoy.getTime();
+      const sel = fechaSeleccionada === fStr;
+      const el = document.createElement('div');
+      let cls = 'dia';
+      if (sel) cls += ' seleccionado';
+      else if (ocupado) cls += ' ocupado';
+      else if (pasado) cls += ' pasado';
+      else if (esHoy) cls += ' hoy';
+      el.className = cls; el.textContent = d;
+      if (!ocupado && !pasado) {
+        el.onclick = () => { fechaSeleccionada = fStr; horaSeleccionada = null; renderCalendario(); renderHoras(); actualizarResumen(); };
+      }
+      grid.appendChild(el);
+    }
+  }
+
+  function cambiarMes(dir) { vistaFecha.setMonth(vistaFecha.getMonth()+dir); renderCalendario(); }
+
+  function renderHoras() {
+    const grid = document.getElementById('horasGrid');
+    grid.innerHTML = '';
+    if (!fechaSeleccionada) {
+      grid.innerHTML = '<div style="color:var(--muted);font-size:12px;grid-column:1/-1;padding:8px 0">Selecciona un día primero</div>';
+      return;
+    }
+    HORAS.forEach(h => {
+      const ocupada = horasOcupadas.some(o => o.fecha === fechaSeleccionada && o.hora === h);
+      const btn = document.createElement('button');
+      btn.className = 'hora-btn' + (ocupada ? ' ocupada' : '') + (horaSeleccionada === h ? ' seleccionada' : '');
+      btn.textContent = h;
+      if (!ocupada) btn.onclick = () => { horaSeleccionada = h; renderHoras(); actualizarResumen(); };
+      grid.appendChild(btn);
+    });
+  }
+
+  function actualizarResumen() {
+    const el = document.getElementById('resumenFecha');
+    if (fechaSeleccionada && horaSeleccionada) {
+      const d = new Date(fechaSeleccionada + 'T' + horaSeleccionada);
+      el.textContent = '📅 ' + d.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'}) + ' · ' + horaSeleccionada + 'h';
+      el.className = 'resumen-fecha activo';
+    } else if (fechaSeleccionada) {
+      el.textContent = 'Ahora elige una hora disponible';
+      el.className = 'resumen-fecha';
+    } else {
+      el.textContent = 'Selecciona un día para ver las horas';
+      el.className = 'resumen-fecha';
+    }
+  }
+
+  function initGapi() {
+    gapi.load('client', async () => {
+      await gapi.client.init({ discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest'] });
+    });
+  }
+
+  function initGsi() {
+    tokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: CLIENT_ID, scope: SCOPES,
+      callback: (resp) => {
+        if (resp.error) { showStatus('Error al conectar: ' + resp.error, 'error'); return; }
+        accessToken = resp.access_token;
+        gapi.client.setToken({ access_token: accessToken });
+        document.getElementById('authSection').style.display = 'none';
+        document.getElementById('authBadge').classList.add('visible');
+      },
+    });
+  }
+
+  function signIn() { tokenClient.requestAccessToken({ prompt: 'consent' }); }
+
+  async function reservarCita() {
+    const nombre = document.getElementById('nombre').value.trim();
+    const correo = document.getElementById('correo').value.trim();
+    const discord = document.getElementById('discord').value.trim();
+    const duracion = parseInt(document.getElementById('duracion').value);
+    const motivo = document.getElementById('motivo').value.trim();
+
+    if (!nombre)            { showStatus('Introduce tu nombre.', 'error'); return; }
+    if (!correo)            { showStatus('Introduce tu correo.', 'error'); return; }
+    if (!discord)           { showStatus('Introduce tu usuario de Discord.', 'error'); return; }
+    if (profSeleccionado === null) { showStatus('Selecciona un profesor.', 'error'); return; }
+    if (!fechaSeleccionada) { showStatus('Selecciona una fecha en el calendario.', 'error'); return; }
+    if (!horaSeleccionada)  { showStatus('Selecciona una hora disponible.', 'error'); return; }
+    if (!accessToken)       { showStatus('Conecta tu cuenta de Google primero.', 'error'); return; }
+
+    const prof = profesores[profSeleccionado];
+    const start = new Date(fechaSeleccionada + 'T' + horaSeleccionada + ':00');
+    const end   = new Date(start.getTime() + duracion * 60000);
+
+    const event = {
+      summary: `Cita ChannelRise — ${nombre} con ${prof.nombre}`,
+      description: `Discord: ${discord}\nCorreo: ${correo}\n\n${motivo || 'Sin motivo especificado.'}`,
+      start: { dateTime: start.toISOString(), timeZone: 'Europe/Madrid' },
+      end:   { dateTime: end.toISOString(),   timeZone: 'Europe/Madrid' },
+      attendees: [{ email: correo }],
+      reminders: { useDefault: false, overrides: [{ method: 'email', minutes: 60 }, { method: 'popup', minutes: 30 }] }
+    };
+
+    const btn = document.getElementById('btnSubmit');
+    btn.disabled = true; btn.textContent = 'RESERVANDO...';
+
+    try {
+      await gapi.client.calendar.events.insert({ calendarId: CALENDAR_ID, resource: event });
+      const opts = { weekday:'long', day:'numeric', month:'long', year:'numeric' };
+      document.getElementById('successDetail').innerHTML =
+        `<strong>Nombre:</strong> ${nombre}<br><strong>Profesor:</strong> ${prof.nombre}<br><strong>Fecha:</strong> ${start.toLocaleDateString('es-ES',opts)} a las ${horaSeleccionada}h<br><strong>Duración:</strong> ${duracion} min<br><strong>Discord:</strong> ${discord}<br><strong>Correo:</strong> ${correo}`;
+      document.getElementById('successOverlay').classList.add('visible');
+      showStatus('','');
+    } catch(err) {
+      showStatus('Error al crear la cita. Revisa los permisos del calendario.', 'error');
+      console.error(err);
+    }
+    btn.disabled = false; btn.textContent = 'RESERVAR CITA';
+  }
+
+  function showStatus(msg, type) {
+    const el = document.getElementById('statusMsg'); el.textContent = msg; el.className = 'status-msg ' + type;
+  }
+
+  function closeSuccess() {
+    document.getElementById('successOverlay').classList.remove('visible');
+    ['nombre','correo','discord','motivo'].forEach(id => document.getElementById(id).value = '');
+    profSeleccionado = null; fechaSeleccionada = null; horaSeleccionada = null;
+    renderProfesores(); renderCalendario(); renderHoras(); actualizarResumen();
+  }
+
+  window.onload = () => { renderProfesores(); renderCalendario(); renderHoras(); initGapi(); initGsi(); };
+</script>
+</body>
+</html>
