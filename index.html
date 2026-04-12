@@ -158,12 +158,13 @@
       </div>
       <div class="field">
         <label>Usuario de Discord</label>
-        <input type="text" id="discord" placeholder="@soysergio_.vg" />
+        <input type="text" id="discord" placeholder="@tunombre" />
       </div>
 
       <div class="field">
         <label>Elige tu profesor</label>
         <div class="profesores" id="profesoresList"></div>
+        <div class="admin-note">Para añadir profesores, edita <code>const profesores</code> en el script al final del HTML.</div>
       </div>
 
       <div class="field">
@@ -260,7 +261,7 @@
   ];
 
   // Horas disponibles — solo desde las 18:00 hora española
-  const HORAS = ['18:00','19:00','20:00','21:00'];
+  const HORAS = ['18:00','19:00','20:00','21:00','22:00'];
 
   let tokenClient, accessToken = null;
   let profSeleccionado = null;
@@ -375,6 +376,38 @@
 
   function signIn() { tokenClient.requestAccessToken({ prompt: 'consent' }); }
 
+  async function slotOcupado(startISO, endISO) {
+    // Consulta el calendario de ADMIN para ver si ya hay una cita ChannelRise en ese hueco
+    try {
+      const resp = await gapi.client.calendar.events.list({
+        calendarId: ADMIN_EMAIL,
+        timeMin: startISO,
+        timeMax: endISO,
+        singleEvents: true,
+        q: 'Cita ChannelRise'
+      });
+      const items = resp.result.items || [];
+      return items.length > 0;
+    } catch(e) {
+      // Si no tenemos acceso al calendario del admin (normal), consultamos freebusy
+      try {
+        const fb = await gapi.client.request({
+          path: 'https://www.googleapis.com/calendar/v3/freeBusy',
+          method: 'POST',
+          body: {
+            timeMin: startISO,
+            timeMax: endISO,
+            items: [{ id: ADMIN_EMAIL }]
+          }
+        });
+        const busy = fb.result.calendars?.[ADMIN_EMAIL]?.busy || [];
+        return busy.length > 0;
+      } catch(e2) {
+        return false; // Si no podemos comprobar, dejamos pasar y confiamos en el manual
+      }
+    }
+  }
+
   async function reservarCita() {
     const nombre  = document.getElementById('nombre').value.trim();
     const correo  = document.getElementById('correo').value.trim();
@@ -393,6 +426,22 @@
     const prof  = profesores[profSeleccionado];
     const start = new Date(fechaSeleccionada + 'T' + horaSeleccionada + ':00');
     const end   = new Date(start.getTime() + duracion * 60000);
+
+    const btn = document.getElementById('btnSubmit');
+    btn.disabled = true; btn.textContent = 'COMPROBANDO...';
+
+    // Verificar que el slot sigue libre antes de crear
+    const ocupado = await slotOcupado(start.toISOString(), end.toISOString());
+    if (ocupado) {
+      showStatus('Esa hora ya ha sido reservada por otro alumno. Por favor elige otra.', 'error');
+      // Marcar la hora como ocupada visualmente
+      horasOcupadas.push({ fecha: fechaSeleccionada, hora: horaSeleccionada });
+      horaSeleccionada = null;
+      renderHoras();
+      actualizarResumen();
+      btn.disabled = false; btn.textContent = 'RESERVAR CITA';
+      return;
+    }
 
     // El evento se guarda en el calendario del usuario (primary)
     // y tanto el usuario como tú (ADMIN_EMAIL) recibís la invitación
@@ -416,7 +465,7 @@
     };
 
     const btn = document.getElementById('btnSubmit');
-    btn.disabled = true; btn.textContent = 'RESERVANDO...';
+    btn.textContent = 'RESERVANDO...';
 
     try {
       await gapi.client.calendar.events.insert({
