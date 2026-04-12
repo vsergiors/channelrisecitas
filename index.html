@@ -131,7 +131,12 @@
       </div>
       <div class="field">
         <label>Motivo de la cita <span style="color:var(--red)">*</span></label>
-        <textarea id="motivo" placeholder="Cuentanos en que necesitas ayuda..."></textarea>
+        <select id="motivo">
+          <option value="">-- Selecciona un tema --</option>
+          <option value="Monetizacion">Monetizacion</option>
+          <option value="Edicion">Edicion</option>
+          <option value="Crecimiento">Crecimiento</option>
+        </select>
       </div>
       <div class="field">
         <label>Duracion de la sesion</label>
@@ -378,7 +383,8 @@
 
   function closeSuccess() {
     document.getElementById('successOverlay').classList.remove('visible');
-    ['nombre','correo','discord','motivo'].forEach(function(id) { document.getElementById(id).value = ''; });
+    ['nombre','correo','discord'].forEach(function(id) { document.getElementById(id).value = ''; });
+    document.getElementById('motivo').selectedIndex = 0;
     profSeleccionado = null; fechaSeleccionada = null; horaSeleccionada = null;
     renderProfesores(); renderCalendario(); renderHoras(); actualizarResumen();
   }
