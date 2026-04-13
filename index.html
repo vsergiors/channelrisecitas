@@ -87,6 +87,65 @@
     .main{grid-template-columns:1fr;padding:0 20px 60px}
     .horas-grid{grid-template-columns:repeat(3,1fr)}
   }
+  .footer-container {
+  background-color: #0f0f0f;
+  color: #ffffff;
+  padding: 20px 10px;
+  text-align: center;
+  border-top: 2px solid #ff0000;
+}
+
+.footer-content {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
+}
+
+.footer-text {
+  font-size: 14px;
+  opacity: 0.8;
+}
+
+.footer-email {
+  font-size: 14px;
+  opacity: 0.9;
+}
+
+.footer-links {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.footer-link {
+  color: #ff0000;
+  text-decoration: none;
+  font-size: 14px;
+  transition: 0.2s ease;
+}
+
+.footer-link:hover {
+  color: #ffffff;
+  text-decoration: underline;
+}
+
+.footer-email a:hover {
+  color: #ffffff;
+  text-decoration: underline;
+}
+
+.footer-separator {
+  color: #555;
+}
+
+.footer-link:focus-visible {
+  outline: 2px solid #ff0000;
+  outline-offset: 3px;
+}
 </style>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 </head>
@@ -397,5 +456,20 @@
 
 
 </script>
+  <footer class="footer-container">
+  <div class="footer-content">
+    <p class="footer-text">© 2026 ChannelRise. Todos los derechos reservados.</p>
+
+    <p class="footer-email">
+      Soporte: <a class="footer-link" href="mailto:soporte.channelrise@hotmail.com">soporte.channelrise@hotmail.com</a>
+    </p>
+
+    <div class="footer-links">
+      <a class="footer-link" href="/terms-of-service.html">Términos de Servicio</a>
+      <span class="footer-separator">|</span>
+      <a class="footer-link" href="/privacy-policy.html">Política de Privacidad</a>
+    </div>
+  </div>
+</footer>
 </body>
 </html>
